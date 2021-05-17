@@ -16,20 +16,21 @@ ng = 1;
 x = sym('x', [nx 1]);
 lambda = sym('lambda', [ng 1]);
 
-
+% set the cost symbolic expression f_sym as a function of x
 f_sym = 0.5*(x-[1;0;0]).'*(x-[1;0;0]);
+% set the equality constraints (
 g_sym = 1-(x.')*x;
 
 
+% compute Lagrangian and gradients
 nablaf_sym = gradient(f_sym, x);
 nablag_sym = gradient(g_sym, x);
-
 
 lagrangian_sym = f_sym + lambda.'*g_sym;
 nablaLagrangian_sym = gradient(lagrangian_sym, x);
 
 
-
+% compute the hessian B according to the chosen hessian approximation
 switch hessian_approx
     case 'EXACT'
         B_sym = jacobian(jacobian(lagrangian_sym,x),x);
@@ -41,8 +42,7 @@ switch hessian_approx
 end
 
 
-
-
+% generate the matlab functions
 matlabFunction(f_sym, 'vars', {x}, 'file', 'f');
 matlabFunction(g_sym, 'vars', {x}, 'file', 'g');
 matlabFunction(nablaf_sym, 'vars', {x}, 'file', 'nablaf');
@@ -101,8 +101,6 @@ while norm([nablaLagrangian_.', g_], inf) > tol
     disp("cost: " + f_)
     disp("alpha: " + alpha)
     
-    
-
     
     iters = iters + 1;
     
