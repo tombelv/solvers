@@ -126,6 +126,10 @@ plot(x_history(1,:),x_history(2,:), 'lineWidth', 2,'Marker', 'o')
 axis equal
 xlabel("x_1")
 ylabel("x_2")
+figure(2)
+plot(alpha_history, 'lineWidth', 2, 'Marker', 'x')
+
+
 
 
 
