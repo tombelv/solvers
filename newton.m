@@ -128,15 +128,6 @@ xlabel("x_1")
 ylabel("x_2")
 figure(2)
 plot(alpha_history, 'lineWidth', 2, 'Marker', 'x')
-
-
-
-
-
-
-
-
-
 figure(3)
 semilogy(kkt_violation_history, 'lineWidth', 2), grid on
 xlabel("Iteration")
