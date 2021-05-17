@@ -22,7 +22,7 @@ x = sym('x', [nx 1]);
 lambda = sym('lambda', [ng 1]);
 
 % set the cost symbolic expression f_sym as a function of x
-f_sym = 0.5*(x-[1;0]).'*(x-[1;0]);
+f_sym = 0.5*(x).'*(x) + ones(1,nx)*x;
 % set the equality constraints (
 g_sym = 1-(x.')*x;
 
