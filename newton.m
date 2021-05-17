@@ -42,8 +42,8 @@ matlabFunction(f_sym, 'vars', {x}, 'file', 'f');
 matlabFunction(g_sym, 'vars', {x}, 'file', 'g');
 matlabFunction(nablaf_sym, 'vars', {x}, 'file', 'nablaf');
 matlabFunction(nablag_sym, 'vars', {x}, 'file', 'nablag');
-matlabFunction(nablalagrangian_sym, 'vars', {x, lambda}, 'file', 'nablalagrangian','Optimize',false);
-matlabFunction(B_sym, 'vars', {x, lambda}, 'file', 'B','Optimize',false);
+matlabFunction(nablalagrangian_sym, 'vars', {x, lambda}, 'file', 'nablalagrangian');
+matlabFunction(B_sym, 'vars', {x, lambda}, 'file', 'B');
 
 %%
 x_ = x_init;
