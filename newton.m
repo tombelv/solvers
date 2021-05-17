@@ -122,5 +122,18 @@ end
 
 figure(1)
 rectangle('Position',[-1 -1 2 2],'Curvature',[1 1], 'lineWidth', 2), hold on
-plot(x_history(1,:),x_history(2,:), 'lineWidth', 2)
+plot(x_history(1,:),x_history(2,:), 'lineWidth', 2,'Marker', 'o')
+axis equal
+xlabel("x_1")
+ylabel("x_2")
 
+
+
+
+
+
+
+figure(3)
+semilogy(kkt_violation_history, 'lineWidth', 2), grid on
+xlabel("Iteration")
+title("KKT violation")
