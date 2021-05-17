@@ -1,4 +1,4 @@
-function alpha = linesearch(x_, f_, nablaf_,deltax_)
+function alpha = linesearch_armijo(x_, f_, nablaf_,deltax_)
 
 beta = 0.9;
 gamma = 0.00001;
