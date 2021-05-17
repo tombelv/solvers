@@ -1,23 +1,28 @@
 commandwindow
 clear
 
+iters = 1;
+x_history = [];
+kkt_violation_history = [];
+alpha_history = [];
+
 % INPUT
 tol = 1e-6;
-x_init = [8;2;3];
+x_init = [8;2];
 lambda_init = 0;
 
 hessian_approx = 'EXACT';
 
 
 % optimization variables and constraints dimensions
-nx = 3;
+nx = 2;
 ng = 1;
 
 x = sym('x', [nx 1]);
 lambda = sym('lambda', [ng 1]);
 
 % set the cost symbolic expression f_sym as a function of x
-f_sym = 0.5*(x-[1;0;0]).'*(x-[1;0;0]);
+f_sym = 0.5*(x-[1;0]).'*(x-[1;0]);
 % set the equality constraints (
 g_sym = 1-(x.')*x;
 
@@ -50,12 +55,10 @@ matlabFunction(nablag_sym, 'vars', {x}, 'file', 'nablag');
 matlabFunction(nablaLagrangian_sym, 'vars', {x, lambda}, 'file', 'nablaLagrangian');
 matlabFunction(B_sym, 'vars', {x, lambda}, 'file', 'B');
 
-%%
+
+
 x_ = x_init;
 lambda_ = lambda_init;
-
-
-iters = 1;
 
 B_ = B(x_,lambda_);
 nablaf_ = nablaf(x_);
@@ -65,7 +68,9 @@ f_ = f(x_);
 
 nablaLagrangian_ = nablaLagrangian(x_,lambda_);
 
-while norm([nablaLagrangian_.', g_], inf) > tol
+kkt_violation = norm([nablaLagrangian_.', g_], inf);
+
+while kkt_violation > tol
     
 
 
@@ -90,16 +95,22 @@ while norm([nablaLagrangian_.', g_], inf) > tol
     f_ = f(x_);
     nablaLagrangian_ = nablaLagrangian(x_,lambda_);
     
+    kkt_violation = norm([nablaLagrangian_.', g_], inf);
+    
     
     disp("-------------------------------------------------------------")
     disp("iteration: " + iters)
-    disp("KKT violation: " + norm([nablaLagrangian_.', g_], inf))
+    disp("KKT violation: " + kkt_violation)
     
     disp("x: ")
     disp(x_)
     disp("lambda: " + lambda_)
     disp("cost: " + f_)
     disp("alpha: " + alpha)
+    
+    x_history = [x_history, x_];
+    kkt_violation_history = [kkt_violation_history, kkt_violation];
+    alpha_history = [alpha_history, alpha];
     
     
     iters = iters + 1;
