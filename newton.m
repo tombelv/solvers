@@ -123,4 +123,9 @@ end
 figure(1)
 rectangle('Position',[-1 -1 2 2],'Curvature',[1 1], 'lineWidth', 2), hold on
 plot(x_history(1,:),x_history(2,:), 'lineWidth', 2)
+axis equal
+
+figure(2)
+plot(alpha_history, 'lineWidth', 2, 'Marker', 'x')
+
 
