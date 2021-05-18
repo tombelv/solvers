@@ -6,12 +6,13 @@ iters = 1;
 
 % INPUT
 tol = 1e-8;
-x_init = [0;1];
+x_init = [0.5;1];
 lambda_init = 0;
 sigma_coeff = 2;
 sigma_init = 1;
+damping_coeff = 0.5;
 
-hessian_approx = 'EXACT';
+hessian_approx = 'GAUSS_NEWTON';
 linesearch = 'MERIT';
 
 
@@ -90,10 +91,15 @@ while kkt_violation > tol
 
 
     % newton direction
-    dir = -[B_ nablag_; nablag_.' zeros(ng,ng)]\[nablaf_; g_];
+    kkt_matrix = [B_ nablag_; nablag_.' zeros(ng,ng)]; 
+    if (det(kkt_matrix) == 0)
+        kkt_matrix = kkt_matrix + eye(size(kkt_matrix,1)) * damping_coeff;
+    end
+    dir = -kkt_matrix\[nablaf_; g_];
 
     deltax_ = dir(1:nx);
     lambda_plus = dir(nx+1:end);
+    disp(lambda_plus)
 
     switch linesearch
         case 'MERIT'
@@ -160,6 +166,8 @@ figure(2)
 
 
 plot(alpha_history, 'lineWidth', 2, 'Marker', 'x')
+xlabel("Iteration")
+title("alpha history")
 figure(3)
 
 
