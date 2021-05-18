@@ -21,12 +21,14 @@ ng = 1;
 x = sym('x', [nx 1]);
 lambda = sym('lambda', [ng 1]);
 
+R_sym = x - ones(nx,1);
+
 % set the cost symbolic expression f_sym as a function of x
-f_sym = 0.5*(x).'*(x) + ones(1,nx)*x;
+f_sym = 0.5*(R_sym.')*R_sym;
 % set the equality constraints (
 g_sym = 1-(x.')*x;
 
-R = x - ones(nx,1);
+
 
 % compute Lagrangian and gradients
 nablaf_sym = gradient(f_sym, x);
@@ -41,7 +43,7 @@ switch hessian_approx
     case 'EXACT'
         B_sym = jacobian(jacobian(lagrangian_sym,x),x);
     case 'GAUSS_NEWTON'
-        nablaR = jacobian(R,x);
+        nablaR = jacobian(R_sym,x);
         B_sym = nablaR*(nablaR.');
     otherwise
         disp("defaulted to EXACT hessian")
