@@ -6,10 +6,13 @@ iters = 1;
 
 % INPUT
 tol = 1e-8;
-x_init = [1;1+10e-6];
+x_init = [0;1];
 lambda_init = 0;
+sigma_coeff = 2;
+sigma_init = 1;
 
 hessian_approx = 'EXACT';
+linesearch = 'MERIT';
 
 
 % optimization variables and constraints dimensions
@@ -20,6 +23,7 @@ ng = 1;
 
 x = sym('x', [nx 1]);
 lambda = sym('lambda', [ng 1]);
+sigma = sym('sigma');
 
 R_sym = x - ones(nx,1);
 
@@ -27,7 +31,8 @@ R_sym = x - ones(nx,1);
 f_sym = 0.5*(R_sym.')*R_sym;
 % set the equality constraints (
 g_sym = 1-(x.')*x;
-
+% set merit function
+m1_sym = f_sym + sigma * norm(g_sym, 1);
 
 
 % compute Lagrangian and gradients
@@ -36,7 +41,6 @@ nablag_sym = gradient(g_sym, x);
 
 lagrangian_sym = f_sym + lambda.'*g_sym;
 nablaLagrangian_sym = gradient(lagrangian_sym, x);
-
 
 % compute the hessian B according to the chosen hessian approximation
 switch hessian_approx
@@ -54,6 +58,7 @@ end
 % generate the matlab functions
 matlabFunction(f_sym, 'vars', {x}, 'file', 'f');
 matlabFunction(g_sym, 'vars', {x}, 'file', 'g');
+matlabFunction(m1_sym, 'vars', {x, sigma}, 'file', 'm1');
 matlabFunction(nablaf_sym, 'vars', {x}, 'file', 'nablaf');
 matlabFunction(nablag_sym, 'vars', {x}, 'file', 'nablag');
 matlabFunction(nablaLagrangian_sym, 'vars', {x, lambda}, 'file', 'nablaLagrangian');
@@ -63,12 +68,14 @@ matlabFunction(B_sym, 'vars', {x, lambda}, 'file', 'B');
 
 x_ = x_init;
 lambda_ = lambda_init;
+sigma_ = sigma_init;
 
 B_ = B(x_,lambda_);
 nablaf_ = nablaf(x_);
 nablag_ = nablag(x_);
 g_ = g(x_);
 f_ = f(x_);
+m1_ = m1(x_, sigma_);
 
 nablaLagrangian_ = nablaLagrangian(x_,lambda_);
 
@@ -87,9 +94,21 @@ while kkt_violation > tol
 
     deltax_ = dir(1:nx);
     lambda_plus = dir(nx+1:end);
+
+    switch linesearch
+        case 'MERIT'
+            % perform linesearch with merit function
+            nablam1_ = nablaf_.' * deltax_ - sigma_*norm(g_, 1);
+            alpha = linesearch_merit(x_, sigma_, m1_, nablam1_,deltax_);
+        case 'ARMIJO'
+            % perform linesearch with Armijo condition
+            alpha = linesearch_armijo(x_, f_, nablaf_,deltax_);
+        otherwise
+            % perform linesearch with Armijo condition
+            alpha = linesearch_armijo(x_, f_, nablaf_,deltax_);
+    end
+
     
-    % perform linesearch with Armijo condition
-    alpha = linesearch_armijo(x_, f_, nablaf_,deltax_);
 
     x_ = x_ + alpha*deltax_;
     lambda_ = (1-alpha)*lambda_ + alpha*lambda_plus;
@@ -102,7 +121,10 @@ while kkt_violation > tol
     g_ = g(x_);
     f_ = f(x_);
     nablaLagrangian_ = nablaLagrangian(x_,lambda_);
-    
+    if (sigma_coeff*lambda_ > sigma_) 
+        sigma_ = sigma_coeff*lambda_;
+    end
+    m1_ = m1(x_, sigma_);
     kkt_violation = norm([nablaLagrangian_.', g_], inf);
     
     
