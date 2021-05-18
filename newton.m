@@ -2,13 +2,11 @@ commandwindow
 clear
 
 iters = 1;
-x_history = [];
-kkt_violation_history = [];
-alpha_history = [];
+
 
 % INPUT
-tol = 1e-6;
-x_init = [8;2];
+tol = 1e-8;
+x_init = [1;1+10e-6];
 lambda_init = 0;
 
 hessian_approx = 'EXACT';
@@ -18,6 +16,8 @@ hessian_approx = 'EXACT';
 nx = 2;
 ng = 1;
 
+
+
 x = sym('x', [nx 1]);
 lambda = sym('lambda', [ng 1]);
 
@@ -26,6 +26,7 @@ f_sym = 0.5*(x).'*(x) + ones(1,nx)*x;
 % set the equality constraints (
 g_sym = 1-(x.')*x;
 
+R = x - ones(nx,1);
 
 % compute Lagrangian and gradients
 nablaf_sym = gradient(f_sym, x);
@@ -40,7 +41,8 @@ switch hessian_approx
     case 'EXACT'
         B_sym = jacobian(jacobian(lagrangian_sym,x),x);
     case 'GAUSS_NEWTON'
-        error('to be implemented')
+        nablaR = jacobian(R,x);
+        B_sym = nablaR*(nablaR.');
     otherwise
         disp("defaulted to EXACT hessian")
         B_sym = jacobian(jacobian(lagrangian_sym,x),x);
@@ -69,6 +71,10 @@ f_ = f(x_);
 nablaLagrangian_ = nablaLagrangian(x_,lambda_);
 
 kkt_violation = norm([nablaLagrangian_.', g_], inf);
+
+x_history = [x_];
+kkt_violation_history = [kkt_violation];
+alpha_history = [];
 
 while kkt_violation > tol
     
