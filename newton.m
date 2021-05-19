@@ -6,8 +6,8 @@ iters = 1;
 
 % INPUT
 tol = 1e-8;
-x_init = [0.5;1];
-lambda_init = 0;
+x_init = [1;1;0];
+lambda_init = [0;0];
 sigma_coeff = 2;
 sigma_init = 1;
 damping_coeff = 0.5;
@@ -17,8 +17,8 @@ linesearch = 'MERIT';
 
 
 % optimization variables and constraints dimensions
-nx = 2;
-ng = 1;
+nx = 3;
+ng = 2;
 
 
 
@@ -26,19 +26,20 @@ x = sym('x', [nx 1]);
 lambda = sym('lambda', [ng 1]);
 sigma = sym('sigma');
 
-R_sym = x - ones(nx,1);
+%R_sym = x - ones(nx,1);
+R_sym = x - [0;1;0];
 
 % set the cost symbolic expression f_sym as a function of x
 f_sym = 0.5*(R_sym.')*R_sym;
 % set the equality constraints (
-g_sym = 1-(x.')*x;
+g_sym = [x(1)^2 - 2*x(2)^3 - x(2) - 10*x(3); x(2) + 10*x(3)];
 % set merit function
 m1_sym = f_sym + sigma * norm(g_sym, 1);
 
 
 % compute Lagrangian and gradients
 nablaf_sym = gradient(f_sym, x);
-nablag_sym = gradient(g_sym, x);
+nablag_sym = jacobian(g_sym, x).';
 
 lagrangian_sym = f_sym + lambda.'*g_sym;
 nablaLagrangian_sym = gradient(lagrangian_sym, x);
@@ -80,7 +81,7 @@ m1_ = m1(x_, sigma_);
 
 nablaLagrangian_ = nablaLagrangian(x_,lambda_);
 
-kkt_violation = norm([nablaLagrangian_.', g_], inf);
+kkt_violation = norm([nablaLagrangian_; g_], inf);
 
 x_history = [x_];
 kkt_violation_history = [kkt_violation];
@@ -131,7 +132,7 @@ while kkt_violation > tol
         sigma_ = sigma_coeff*lambda_;
     end
     m1_ = m1(x_, sigma_);
-    kkt_violation = norm([nablaLagrangian_.', g_], inf);
+    kkt_violation = norm([nablaLagrangian_; g_], inf);
     
     
     disp("-------------------------------------------------------------")
@@ -157,20 +158,20 @@ end
 %%
 
 figure(1)
-rectangle('Position',[-1 -1 2 2],'Curvature',[1 1], 'lineWidth', 2), hold on
-plot(x_history(1,:),x_history(2,:), 'lineWidth', 2,'Marker', 'o')
+rectangle('Position',[-1 -1 2 2],'Curvature',[1 1], 'lineWidth', 1), hold on
+plot(x_history(1,:),x_history(2,:), 'lineWidth', 1,'Marker', 'o')
 axis equal
 xlabel("x_1")
 ylabel("x_2")
 figure(2)
 
 
-plot(alpha_history, 'lineWidth', 2, 'Marker', 'x')
+plot(alpha_history, 'lineWidth', 1.5, 'Marker', 'x')
 xlabel("Iteration")
 title("alpha history")
 figure(3)
 
 
-semilogy(kkt_violation_history, 'lineWidth', 2), grid on
+semilogy(kkt_violation_history, 'lineWidth', 1.5), grid on
 xlabel("Iteration")
 title("KKT violation")
