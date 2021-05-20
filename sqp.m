@@ -10,6 +10,7 @@ tol = 1e-8;
 % lambda_init = [0;0];
 x_init = [1;1];
 lambda_init = 0.5;
+mu_init = 0;
 sigma_coeff = 2;
 sigma_init = 1;
 damping_coeff = 0.5;
@@ -21,7 +22,7 @@ linesearch = 'MERIT';
 % optimization variables and constraints dimensions
 nx = length(x_init);
 ng = length(lambda_init);
-
+nh = length(mu_init);
 
 
 x = sym('x', [nx 1]);
@@ -36,6 +37,7 @@ f_sym = 0.5*(R_sym.')*R_sym;
 % set the equality constraints (
 % g_sym = [x(1)^2 - 2*x(2)^3 - x(2) - 10*x(3); x(2) + 10*x(3)];
 g_sym = 1 - x.' * x;
+h_sym = 0.5-x(1)^2-x(2);
 % set merit function
 m1_sym = f_sym + sigma * norm(g_sym, 1);
 
@@ -43,8 +45,9 @@ m1_sym = f_sym + sigma * norm(g_sym, 1);
 % compute Lagrangian and gradients
 nablaf_sym = gradient(f_sym, x);
 nablag_sym = jacobian(g_sym, x).';
+nablah_sym = jacobian(h_sym, x).';
 
-lagrangian_sym = f_sym + lambda.'*g_sym;
+lagrangian_sym = f_sym + lambda.'*g_sym + mu.'*h_sym;
 nablaLagrangian_sym = gradient(lagrangian_sym, x);
 
 % compute the hessian B according to the chosen hessian approximation
@@ -63,28 +66,33 @@ end
 % generate the matlab functions
 matlabFunction(f_sym, 'vars', {x}, 'file', 'f');
 matlabFunction(g_sym, 'vars', {x}, 'file', 'g');
+matlabFunction(h_sym, 'vars', {x}, 'file', 'h');
 matlabFunction(m1_sym, 'vars', {x, sigma}, 'file', 'm1');
 matlabFunction(nablaf_sym, 'vars', {x}, 'file', 'nablaf');
 matlabFunction(nablag_sym, 'vars', {x}, 'file', 'nablag');
-matlabFunction(nablaLagrangian_sym, 'vars', {x, lambda}, 'file', 'nablaLagrangian');
-matlabFunction(B_sym, 'vars', {x, lambda}, 'file', 'B');
+matlabFunction(nablah_sym, 'vars', {x}, 'file', 'nablah');
+matlabFunction(nablaLagrangian_sym, 'vars', {x, lambda, mu}, 'file', 'nablaLagrangian');
+matlabFunction(B_sym, 'vars', {x, lambda, mu}, 'file', 'B');
 
 
 
 x_ = x_init;
 lambda_ = lambda_init;
+mu_ = mu_init;
 sigma_ = sigma_init;
 
-B_ = B(x_,lambda_);
+B_ = B(x_,lambda_, mu_);
 nablaf_ = nablaf(x_);
 nablag_ = nablag(x_);
+nablah_ = nablah(x_);
 g_ = g(x_);
 f_ = f(x_);
+h_ = h(x_);
 m1_ = m1(x_, sigma_);
 
-nablaLagrangian_ = nablaLagrangian(x_,lambda_);
+nablaLagrangian_ = nablaLagrangian(x_,lambda_, mu_);
 
-kkt_violation = norm([nablaLagrangian_; g_], inf);
+kkt_violation = norm([nablaLagrangian_; g_; max(zeros(nh, 1), h_)], inf);
 
 x_history = [x_];
 kkt_violation_history = [kkt_violation];
@@ -92,13 +100,12 @@ alpha_history = [];
 
 while kkt_violation > tol
     % regularization of the hessian
-    B_ = hessian_regularization(nablag_, B_)  
-    kkt_matrix = [B_ nablag_; nablag_.' zeros(ng,ng)]
-    dir = -kkt_matrix\[nablaf_; g_];
+    B_ = hessian_regularization(nablag_, B_);  
     
-    deltax_ = dir(1:nx);
-    lambda_plus = dir(nx+1:end);
-    disp(lambda_plus)
+    
+    [deltax_,~,~,~,multipliers_] = quadprog(B_, nablaf_, nablah_.', -h_, nablag_.', -g_);
+    lambda_plus = multipliers_.eqlin;
+    mu_plus = multipliers_.ineqlin;
 
     switch linesearch
         case 'MERIT'
@@ -117,20 +124,21 @@ while kkt_violation > tol
 
     x_ = x_ + alpha*deltax_;
     lambda_ = (1-alpha)*lambda_ + alpha*lambda_plus;
+    mu_ = (1-alpha)*mu_ + alpha*mu_plus;
 
 
     
-    B_ = B(x_,lambda_);
+    B_ = B(x_,lambda_, mu_);
     nablaf_ = nablaf(x_);
     nablag_ = nablag(x_);
     g_ = g(x_);
     f_ = f(x_);
-    nablaLagrangian_ = nablaLagrangian(x_,lambda_);
+    nablaLagrangian_ = nablaLagrangian(x_,lambda_, mu_);
     if (sigma_coeff*lambda_ > sigma_) 
         sigma_ = sigma_coeff*lambda_;
     end
     m1_ = m1(x_, sigma_);
-    kkt_violation = norm([nablaLagrangian_; g_], inf);
+    kkt_violation = norm([nablaLagrangian_; g_; max(zeros(nh, 1), h_)], inf);
     
     
     disp("-------------------------------------------------------------")
