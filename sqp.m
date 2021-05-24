@@ -8,8 +8,8 @@ iters = 1;
 tol = 1e-8;
 % x_init = [1;1;0];
 % lambda_init = [0;0];
-x_init = [1;1];
-lambda_init = 0.5;
+x_init = [1e-3;-1];
+lambda_init = 0;
 mu_init = 0;
 sigma_coeff = 2;
 sigma_init = 1;
@@ -27,6 +27,7 @@ nh = length(mu_init);
 
 x = sym('x', [nx 1]);
 lambda = sym('lambda', [ng 1]);
+mu = sym('mu', [nh 1]);
 sigma = sym('sigma');
 
 R_sym = x - ones(nx,1);
@@ -100,10 +101,10 @@ alpha_history = [];
 
 while kkt_violation > tol
     % regularization of the hessian
-    B_ = hessian_regularization(nablag_, B_);  
+    B_ = hessian_regularization(nablag_, B_)  
     
-    
-    [deltax_,~,~,~,multipliers_] = quadprog(B_, nablaf_, nablah_.', -h_, nablag_.', -g_);
+    opts.ConvexCheck = 'off';
+    [deltax_,~,~,~,multipliers_] = quadprog(B_, nablaf_, nablah_.', -h_, nablag_.', -g_, [], [], [], opts);
     lambda_plus = multipliers_.eqlin;
     mu_plus = multipliers_.ineqlin;
 
@@ -150,6 +151,7 @@ while kkt_violation > tol
     disp("lambda: " + lambda_)
     disp("cost: " + f_)
     disp("alpha: " + alpha)
+    disp("m1: " + m1_)
     
     x_history = [x_history, x_];
     kkt_violation_history = [kkt_violation_history, kkt_violation];
@@ -165,6 +167,9 @@ end
 
 figure(1)
 rectangle('Position',[-1 -1 2 2],'Curvature',[1 1], 'lineWidth', 1), hold on
+x1 = linspace(-1,1,100);
+x2 = 0.5 - x1.^2;
+plot(x1, x2)
 plot(x_history(1,:),x_history(2,:), 'lineWidth', 1,'Marker', 'o')
 axis equal
 xlabel("x_1")
