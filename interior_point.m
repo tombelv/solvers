@@ -10,8 +10,8 @@ tol = 1e-8;
 % lambda_init = [0;0];
 x_init = [0;1];
 lambda_init = 0;
-mu_init = 0.5;
-s_init = 0.5;
+mu_init = 0.1;
+s_init = 0.1;
 tau_init = 0.3;
 sigma_coeff = 2;
 sigma_init = 1;
@@ -109,6 +109,7 @@ kkt_violation = norm([nablaLagrangian_; g_; max(zeros(nh, 1), h_)], inf);
 x_history = [x_];
 kkt_violation_history = [kkt_violation];
 alpha_history = [];
+tau_history = [];
 
 while kkt_violation > tol && tau_ > tol
     % regularization of the hessian
@@ -165,6 +166,7 @@ while kkt_violation > tol && tau_ > tol
     x_history = [x_history, x_];
     kkt_violation_history = [kkt_violation_history, kkt_violation];
     alpha_history = [alpha_history, alpha];
+    tau_history = [tau_history, tau_];
     
     
     iters = iters + 1;
@@ -184,14 +186,14 @@ axis equal
 xlabel("x_1")
 ylabel("x_2")
 figure(2)
-
-
 plot(alpha_history, 'lineWidth', 1.5, 'Marker', 'x')
 xlabel("Iteration")
 title("alpha history")
 figure(3)
-
-
+plot(tau_history, 'lineWidth', 1.5, 'Marker', 'x')
+xlabel("Iteration")
+title("tau history")
+figure(4)
 semilogy(kkt_violation_history, 'lineWidth', 1.5), grid on
 xlabel("Iteration")
 title("KKT violation")
