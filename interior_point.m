@@ -10,7 +10,9 @@ tol = 1e-8;
 % lambda_init = [0;0];
 x_init = [0;1];
 lambda_init = 0;
-mu_init = 0;
+mu_init = 0.5;
+s_init = 0.5;
+tau_init = 0.3;
 sigma_coeff = 2;
 sigma_init = 1;
 damping_coeff = 0.5;
@@ -23,12 +25,15 @@ linesearch = 'MERIT';
 nx = length(x_init);
 ng = length(lambda_init);
 nh = length(mu_init);
+ns = nh;
 
 
 x = sym('x', [nx 1]);
 lambda = sym('lambda', [ng 1]);
 mu = sym('mu', [nh 1]);
 sigma = sym('sigma');
+s = sym('s', [ns 1]);
+tau = sym('tau');
 
 R_sym = x - ones(nx,1);
 %R_sym = x - [0;1;0];
@@ -40,13 +45,14 @@ f_sym = 0.5*(R_sym.')*R_sym;
 g_sym = 1 - x.' * x;
 h_sym = 0.5-x(1)^2-x(2);
 % set merit function
-m1_sym = f_sym + sigma * norm(g_sym, 1);
+m1_sym = f_sym + sigma * norm(g_sym, 1) + sigma * norm(h_sym + s, 1) - tau*sum(log(s));
 
 
 % compute Lagrangian and gradients
 nablaf_sym = gradient(f_sym, x);
 nablag_sym = jacobian(g_sym, x).';
 nablah_sym = jacobian(h_sym, x).';
+nablam1_sym = jacobian(m1_sym, x).';
 
 lagrangian_sym = f_sym + lambda.'*g_sym + mu.'*h_sym;
 nablaLagrangian_sym = gradient(lagrangian_sym, x);
@@ -68,10 +74,11 @@ end
 matlabFunction(f_sym, 'vars', {x}, 'file', 'f');
 matlabFunction(g_sym, 'vars', {x}, 'file', 'g');
 matlabFunction(h_sym, 'vars', {x}, 'file', 'h');
-matlabFunction(m1_sym, 'vars', {x, sigma}, 'file', 'm1');
+matlabFunction(m1_sym, 'vars', {x, sigma, s, tau}, 'file', 'm1');
 matlabFunction(nablaf_sym, 'vars', {x}, 'file', 'nablaf');
 matlabFunction(nablag_sym, 'vars', {x}, 'file', 'nablag');
 matlabFunction(nablah_sym, 'vars', {x}, 'file', 'nablah');
+matlabFunction(nablam1_sym, 'vars', {x, sigma, s, tau}, 'file', 'nablam1');
 matlabFunction(nablaLagrangian_sym, 'vars', {x, lambda, mu}, 'file', 'nablaLagrangian');
 matlabFunction(B_sym, 'vars', {x, lambda, mu}, 'file', 'B');
 
@@ -80,18 +87,22 @@ matlabFunction(B_sym, 'vars', {x, lambda, mu}, 'file', 'B');
 x_ = x_init;
 lambda_ = lambda_init;
 mu_ = mu_init;
+s_ = s_init;
 sigma_ = sigma_init;
+tau_ = tau_init;
 
 B_ = B(x_,lambda_, mu_);
 nablaf_ = nablaf(x_);
 nablag_ = nablag(x_);
 nablah_ = nablah(x_);
+nablam1_ = nablam1(x_, sigma_, s_, tau_);
 g_ = g(x_);
 f_ = f(x_);
 h_ = h(x_);
-m1_ = m1(x_, sigma_);
+m1_ = m1(x_, sigma_, s_, tau_);
 
 nablaLagrangian_ = nablaLagrangian(x_,lambda_, mu_);
+r = [nablaLagrangian_; g_; h_ + s_; diag(mu_) * s_ - tau_];
 
 kkt_violation = norm([nablaLagrangian_; g_; max(zeros(nh, 1), h_)], inf);
 
@@ -99,46 +110,44 @@ x_history = [x_];
 kkt_violation_history = [kkt_violation];
 alpha_history = [];
 
-while kkt_violation > tol
+while kkt_violation > tol && tau_ > tol
     % regularization of the hessian
     B_ = hessian_regularization(nablag_, B_)  
     
-    opts.ConvexCheck = 'off';
-    [deltax_,~,~,~,multipliers_] = quadprog(B_, nablaf_, nablah_.', -h_, nablag_.', -g_, [], [], [], opts);
-    lambda_plus = multipliers_.eqlin;
-    mu_plus = multipliers_.ineqlin;
+    kkt_matrix = [B_ nablag_ nablah_ zeros(nx, ns); nablag_.' zeros(ng,ng) zeros(ng, nh) zeros(ng, ns);
+        nablah_.' zeros(nh,ng) zeros(nh, nh) eye(nh); zeros(nh, nx) zeros(nh, ng) diag(s_) diag(mu_)];
+    dir = -kkt_matrix\r;
+    delta_x_ = dir(1:nx);
+    delta_lambda_ = dir(nx+1);
+    delta_mu_ = dir(nx+2);
+    delta_s_ = dir(nx+3:end);
 
-    switch linesearch
-        case 'MERIT'
-            % perform linesearch with merit function
-            nablam1_ = nablaf_.' * deltax_ - sigma_*norm(g_, 1);
-            alpha = linesearch_merit(x_, sigma_, m1_, nablam1_,deltax_);
-        case 'ARMIJO'
-            % perform linesearch with Armijo condition
-            alpha = linesearch_armijo(x_, f_, nablaf_,deltax_);
-        otherwise
-            % perform linesearch with Armijo condition
-            alpha = linesearch_armijo(x_, f_, nablaf_,deltax_);
+    %linesearch merit
+    alpha_ = linesearch_mus(s_, mu_, delta_s_, delta_mu_);
+    alpha = linesearch_merit_ip(alpha_, x_, sigma_, s_, tau_, m1_, nablam1_, delta_x_);
+
+    x_ = x_ + alpha*delta_x_;
+    lambda_ = lambda_ + alpha*delta_lambda_;
+    mu_ = mu_ + alpha*delta_mu_;
+    s_ = s_ + alpha*delta_s_;
+    
+    %decrease the barrier parameter
+    if (norm(r, inf) <= tau_) 
+        tau_ = max(0.1*tau_, tol);
     end
 
-    
-
-    x_ = x_ + alpha*deltax_;
-    lambda_ = (1-alpha)*lambda_ + alpha*lambda_plus;
-    mu_ = (1-alpha)*mu_ + alpha*mu_plus;
-
-
-    
     B_ = B(x_,lambda_, mu_);
     nablaf_ = nablaf(x_);
     nablag_ = nablag(x_);
     g_ = g(x_);
     f_ = f(x_);
     nablaLagrangian_ = nablaLagrangian(x_,lambda_, mu_);
+    r = [nablaLagrangian_; g_; h_ + s_; diag(mu_) * s_ - tau_];
     if (sigma_coeff*lambda_ > sigma_) 
         sigma_ = sigma_coeff*lambda_;
     end
-    m1_ = m1(x_, sigma_);
+    m1_ = m1(x_, sigma_, s_, tau_);
+    nablam1_ = nablam1(x_, sigma_, s_, tau_);
     kkt_violation = norm([nablaLagrangian_; g_; max(zeros(nh, 1), h_)], inf);
     
     
