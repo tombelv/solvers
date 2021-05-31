@@ -140,7 +140,9 @@ while kkt_violation > tol && tau_ > tol
     B_ = B(x_,lambda_, mu_);
     nablaf_ = nablaf(x_);
     nablag_ = nablag(x_);
+    nablah_ = nablah(x_);
     g_ = g(x_);
+    h_ = h(x_);
     f_ = f(x_);
     nablaLagrangian_ = nablaLagrangian(x_,lambda_, mu_);
     r = [nablaLagrangian_; g_; h_ + s_; diag(mu_) * s_ - tau_];

@@ -132,7 +132,9 @@ while kkt_violation > tol
     B_ = B(x_,lambda_, mu_);
     nablaf_ = nablaf(x_);
     nablag_ = nablag(x_);
+    nablah_ = nablah(x_);
     g_ = g(x_);
+    h_ = h(x_);
     f_ = f(x_);
     nablaLagrangian_ = nablaLagrangian(x_,lambda_, mu_);
     if (sigma_coeff*lambda_ > sigma_) 
