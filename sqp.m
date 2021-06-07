@@ -1,6 +1,11 @@
 commandwindow
 clear
 
+set(groot, 'defaultAxesTickLabelInterpreter','latex'); set(groot, 'defaultLegendInterpreter','latex');
+set(groot, 'defaultColorbarTickLabelInterpreter','latex');
+set(groot, 'defaultTextInterpreter','latex');
+set(groot, 'defaultFigureRenderer','painters');
+
 iters = 1;
 
 
@@ -9,13 +14,17 @@ tol = 1e-8;
 % x_init = [1;1;0];
 % lambda_init = [0;0];
 x_init = [0;1];
+% x_init = [-1;-1];
+%  x_init = [0.9;1];
+% x_init = [1;-1];
+% x_init = [0;-1];
 lambda_init = 0;
-mu_init = 0;
+mu_init = 1;
 sigma_coeff = 2;
 sigma_init = 1;
 damping_coeff = 0.5;
 
-hessian_approx = 'EXACT';
+hessian_approx = 'GAUSS_NEWTON';
 linesearch = 'MERIT';
 
 
@@ -30,7 +39,7 @@ lambda = sym('lambda', [ng 1]);
 mu = sym('mu', [nh 1]);
 sigma = sym('sigma');
 
-R_sym = x - ones(nx,1);
+R_sym = x + ones(nx,1);
 %R_sym = x - [0;1;0];
 
 % set the cost symbolic expression f_sym as a function of x
@@ -101,7 +110,7 @@ alpha_history = [];
 
 while kkt_violation > tol
     % regularization of the hessian
-    B_ = hessian_regularization(nablag_, B_)  
+    B_ = hessian_regularization(nablag_, B_);  
     
     opts.ConvexCheck = 'off';
     [deltax_,~,~,~,multipliers_] = quadprog(B_, nablaf_, nablah_.', -h_, nablag_.', -g_, [], [], [], opts);
@@ -168,23 +177,27 @@ end
 %%
 
 figure(1)
-rectangle('Position',[-1 -1 2 2],'Curvature',[1 1], 'lineWidth', 1), hold on
-x1 = linspace(-1,1,100);
+rectangle('Position',[-1 -1 2 2],'Curvature',[1 1], 'lineWidth', 1.5), hold on
+x1 = linspace(-2,2,100);
 x2 = 0.5 - x1.^2;
-plot(x1, x2)
-plot(x_history(1,:),x_history(2,:), 'lineWidth', 1,'Marker', 'o')
+plot(x1, x2, 'lineWidth', 1.5)
+plot(x_history(1,:),x_history(2,:), 'lineWidth', 1.5,'Marker', 'o')
 axis equal
-xlabel("x_1")
-ylabel("x_2")
+xlabel("$x_1$")
+ylabel("$x_2$")
+axis([-2 2 -2 2])
+grid on
+
+
 figure(2)
-
-
 plot(alpha_history, 'lineWidth', 1.5, 'Marker', 'x')
 xlabel("Iteration")
-title("alpha history")
+title("$\alpha$ linesearch")
+grid on
+ylim([0 1])
+
+
 figure(3)
-
-
 semilogy(kkt_violation_history, 'lineWidth', 1.5), grid on
 xlabel("Iteration")
 title("KKT violation")
