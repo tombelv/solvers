@@ -1,5 +1,6 @@
 commandwindow
 clear
+close all
 
 set(groot, 'defaultAxesTickLabelInterpreter','latex'); set(groot, 'defaultLegendInterpreter','latex');
 set(groot, 'defaultColorbarTickLabelInterpreter','latex');
@@ -13,13 +14,13 @@ iters = 1;
 tol = 1e-8;
 % x_init = [1;1;0];
 % lambda_init = [0;0];
-x_init = [0;1];
+x_init = [0.5;1];
 lambda_init = 0;
 sigma_coeff = 2;
 sigma_init = 1;
 damping_coeff = 0.5;
 
-hessian_approx = 'EXACT';
+hessian_approx = 'GAUSS_NEWTON';
 linesearch = 'MERIT';
 
 
@@ -94,6 +95,7 @@ kkt_violation = norm([nablaLagrangian_; g_], inf);
 x_history = [x_];
 kkt_violation_history = [kkt_violation];
 alpha_history = [];
+lambda_history = [lambda_];
 
 while kkt_violation > tol
     % regularization of the hessian
@@ -117,7 +119,6 @@ while kkt_violation > tol
             % perform linesearch with Armijo condition
             alpha = linesearch_armijo(x_, f_, nablaf_,deltax_);
     end
-
     x_ = x_ + alpha*deltax_;
     lambda_ = (1-alpha)*lambda_ + alpha*lambda_plus;
 
@@ -149,6 +150,7 @@ while kkt_violation > tol
     x_history = [x_history, x_];
     kkt_violation_history = [kkt_violation_history, kkt_violation];
     alpha_history = [alpha_history, alpha];
+    lambda_history = [lambda_history, lambda_];
     
     
     iters = iters + 1;
@@ -180,3 +182,10 @@ figure(3)
 semilogy(kkt_violation_history, 'lineWidth', 1.5), grid on
 xlabel("Iteration")
 title("KKT violation")
+
+figure(4)
+plot(lambda_history, 'lineWidth', 1.5, 'Marker', 'x')
+xlabel("Iteration")
+title("$\lambda$ history")
+grid on
+ylim([0 1])
