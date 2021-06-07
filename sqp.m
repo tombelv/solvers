@@ -13,13 +13,13 @@ iters = 1;
 tol = 1e-8;
 % x_init = [1;1;0];
 % lambda_init = [0;0];
-x_init = [0;1];
-% x_init = [-1;-1];
-%  x_init = [0.9;1];
+ x_init = [0;1];
+%x_init = [-1;-1];
+% x_init = [0.9;1];
 % x_init = [1;-1];
-% x_init = [0;-1];
+% x_init = [-1e-6;-1];
 lambda_init = 0;
-mu_init = 1;
+mu_init = 0;
 sigma_coeff = 2;
 sigma_init = 1;
 damping_coeff = 0.5;
@@ -187,6 +187,7 @@ xlabel("$x_1$")
 ylabel("$x_2$")
 axis([-2 2 -2 2])
 grid on
+%saveas(gcf,'1_x','epsc')
 
 
 figure(2)
@@ -195,9 +196,11 @@ xlabel("Iteration")
 title("$\alpha$ linesearch")
 grid on
 ylim([0 1])
+%saveas(gcf,'1_alpha','epsc')
 
 
 figure(3)
 semilogy(kkt_violation_history, 'lineWidth', 1.5), grid on
 xlabel("Iteration")
 title("KKT violation")
+%saveas(gcf,'1_kkt','epsc')
