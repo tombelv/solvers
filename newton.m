@@ -1,6 +1,11 @@
 commandwindow
 clear
 
+set(groot, 'defaultAxesTickLabelInterpreter','latex'); set(groot, 'defaultLegendInterpreter','latex');
+set(groot, 'defaultColorbarTickLabelInterpreter','latex');
+set(groot, 'defaultTextInterpreter','latex');
+set(groot, 'defaultFigureRenderer','painters');
+
 iters = 1;
 
 
@@ -8,8 +13,8 @@ iters = 1;
 tol = 1e-8;
 % x_init = [1;1;0];
 % lambda_init = [0;0];
-x_init = [1;1];
-lambda_init = 0.5;
+x_init = [0;1];
+lambda_init = 0;
 sigma_coeff = 2;
 sigma_init = 1;
 damping_coeff = 0.5;
@@ -28,14 +33,14 @@ x = sym('x', [nx 1]);
 lambda = sym('lambda', [ng 1]);
 sigma = sym('sigma');
 
-R_sym = x - ones(nx,1);
+R_sym = x + ones(nx, 1);
 %R_sym = x - [0;1;0];
 
 % set the cost symbolic expression f_sym as a function of x
 f_sym = 0.5*(R_sym.')*R_sym;
 % set the equality constraints (
 % g_sym = [x(1)^2 - 2*x(2)^3 - x(2) - 10*x(3); x(2) + 10*x(3)];
-g_sym = 1 - x.' * x;
+g_sym = 1 - x' * x;
 % set merit function
 m1_sym = f_sym + sigma * norm(g_sym, 1);
 
@@ -113,8 +118,6 @@ while kkt_violation > tol
             alpha = linesearch_armijo(x_, f_, nablaf_,deltax_);
     end
 
-    
-
     x_ = x_ + alpha*deltax_;
     lambda_ = (1-alpha)*lambda_ + alpha*lambda_plus;
 
@@ -156,20 +159,24 @@ end
 %%
 
 figure(1)
-rectangle('Position',[-1 -1 2 2],'Curvature',[1 1], 'lineWidth', 1), hold on
-plot(x_history(1,:),x_history(2,:), 'lineWidth', 1,'Marker', 'o')
+rectangle('Position',[-1 -1 2 2],'Curvature',[1 1], 'lineWidth', 1.5), hold on
+plot(x_history(1,:),x_history(2,:), 'lineWidth', 1.5,'Marker', 'o')
 axis equal
-xlabel("x_1")
-ylabel("x_2")
+xlabel("$x_1$")
+ylabel("$x_2$")
+axis([-2 2 -2 2])
+grid on
+
+
 figure(2)
-
-
 plot(alpha_history, 'lineWidth', 1.5, 'Marker', 'x')
 xlabel("Iteration")
-title("alpha history")
+title("$\alpha$ linesearch")
+grid on
+ylim([0 1])
+
+
 figure(3)
-
-
 semilogy(kkt_violation_history, 'lineWidth', 1.5), grid on
 xlabel("Iteration")
 title("KKT violation")
