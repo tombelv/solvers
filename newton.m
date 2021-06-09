@@ -12,15 +12,15 @@ iters = 1;
 
 % INPUT
 tol = 1e-8;
-% x_init = [1;1;0];
-% lambda_init = [0;0];
-x_init = [0.5;1];
-lambda_init = 0;
+x_init = [1;1;1];
+lambda_init = [0;0];
+% x_init = [0.5;1];
+% lambda_init = 0;
 sigma_coeff = 2;
-sigma_init = 1;
+sigma_init = 10;
 damping_coeff = 0.5;
 
-hessian_approx = 'GAUSS_NEWTON';
+hessian_approx = 'EXACT';
 linesearch = 'MERIT';
 
 
@@ -34,14 +34,14 @@ x = sym('x', [nx 1]);
 lambda = sym('lambda', [ng 1]);
 sigma = sym('sigma');
 
-R_sym = x + ones(nx, 1);
-%R_sym = x - [0;1;0];
+%R_sym = x + ones(nx, 1);
+R_sym = x + [0;1;0];
 
 % set the cost symbolic expression f_sym as a function of x
 f_sym = 0.5*(R_sym.')*R_sym;
 % set the equality constraints (
-% g_sym = [x(1)^2 - 2*x(2)^3 - x(2) - 10*x(3); x(2) + 10*x(3)];
-g_sym = 1 - x' * x;
+g_sym = [x(1)^2 - 2*x(2)^3; x(2) + 10*x(3)];
+%g_sym = 1 - x' * x;
 % set merit function
 m1_sym = f_sym + sigma * norm(g_sym, 1);
 

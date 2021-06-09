@@ -13,9 +13,9 @@ iters = 1;
 tol = 1e-8;
 % x_init = [1;1;0];
 % lambda_init = [0;0];
- x_init = [0;1];
+% x_init = [0;1];
 %x_init = [-1;-1];
-% x_init = [0.9;1];
+x_init = [0.9;1];
 % x_init = [1;-1];
 % x_init = [-1e-6;-1];
 lambda_init = 0;
@@ -195,6 +195,7 @@ plot(alpha_history, 'lineWidth', 1.5, 'Marker', 'x')
 xlabel("Iteration")
 title("$\alpha$ linesearch")
 grid on
+xlim([1 10])
 ylim([0 1])
 %saveas(gcf,'1_alpha','epsc')
 
