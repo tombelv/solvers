@@ -15,24 +15,17 @@ tol = 1e-8;
 % x_init = [1;1;0];
 % lambda_init = [0;0];
 x_init = [0.9;1];
+%x_init = [0;1];
+%x_init = [-1;-1];
+%x_init = [1;-1];
+%x_init = [-1e-6;-1];
+tau_init = 0.001;
 lambda_init = 0;
 mu_init = 0;
 s_init = 1;
 sigma_coeff = 2;
-sigma_init = 0;
+sigma_init = 1;
 damping_coeff = 0.5;
-tau_init = 0.1;
-%x_init = [0;1];
-%tau_init = 1;
-%x_init = [-1;-1];
-% x_init = [1;-1];
-% x_init = [-1e-6;-1];
-% lambda_init = 0;
-% mu_init = 0;
-% s_init = 0.1;
-% sigma_coeff = 2;
-% sigma_init = 1;
-% damping_coeff = 0.5;
 
 hessian_approx = 'EXACT';
 linesearch = 'MERIT';
@@ -214,7 +207,7 @@ plot(alpha_history, 'lineWidth', 1.5, 'Marker', 'x')
 xlabel("Iteration")
 title("$\alpha$ linesearch")
 grid on
-xlim([1 iters])
+xlim([1 iters-1])
 ylim([0 1])
 %saveas(gcf,'1_alpha','epsc')
 
