@@ -18,7 +18,7 @@ x_init = [0.9;1];
 %x_init = [0;1];
 %x_init = [-1;-1];
 %x_init = [1;-1];
-%x_init = [-1e-6;-1];
+%x_init = [0;-1];
 tau_init = 0.001;
 lambda_init = 0;
 mu_init = 0;
@@ -199,7 +199,7 @@ xlabel("$x_1$")
 ylabel("$x_2$")
 axis([-2 2 -2 2])
 grid on
-%saveas(gcf,'1_x','epsc')
+%saveas(gcf,'5_x','epsc')
 
 
 figure(2)
@@ -209,11 +209,11 @@ title("$\alpha$ linesearch")
 grid on
 xlim([1 iters-1])
 ylim([0 1])
-%saveas(gcf,'1_alpha','epsc')
+%saveas(gcf,'5_alpha','epsc')
 
 
 figure(3)
 semilogy(kkt_violation_history, 'lineWidth', 1.5), grid on
 xlabel("Iteration")
 title("KKT violation")
-%saveas(gcf,'1_kkt','epsc')
+%saveas(gcf,'5_kkt','epsc')

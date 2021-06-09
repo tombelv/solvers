@@ -195,7 +195,7 @@ plot(alpha_history, 'lineWidth', 1.5, 'Marker', 'x')
 xlabel("Iteration")
 title("$\alpha$ linesearch")
 grid on
-xlim([1 10])
+xlim([1 iters-1])
 ylim([0 1])
 %saveas(gcf,'1_alpha','epsc')
 
